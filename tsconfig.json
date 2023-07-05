@@ -4,7 +4,7 @@
     "allowSyntheticDefaultImports": true,
     "useUnknownInCatchVariables": false,
     "useDefineForClassFields": true,
-    "allowJs": false,
+    "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "rootDir": "src",
@@ -18,7 +18,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": false,
-    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./src/*"]
