@@ -1,7 +1,10 @@
 import { httpServer } from "./src/http_server/";
+import * as dotenv from "dotenv";
 
-const HTTP_PORT = 8181;
+dotenv.config();
 
-httpServer.listen(HTTP_PORT, () => {
-  console.log(`Start static http server on the ${HTTP_PORT} port!`);
+const PORT = process.env.PORT || 8181;
+
+httpServer.listen(PORT, () => {
+  console.log(`Start static http server on the ${PORT} port!`);
 });
