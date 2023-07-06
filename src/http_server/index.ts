@@ -28,7 +28,7 @@ const webSocketServer = new ws.WebSocketServer({
   maxPayload: 100000,
 });
 
-const connections: ws[] = [];
+const connections: ws.WebSocket[] = [];
 const users = new Users();
 const rooms = new Rooms();
 
@@ -59,13 +59,19 @@ webSocketServer.on("connection", (socket, req) => {
         return;
       }
 
-      connections.forEach((connection) => {
-        const response: ResponseMessage = { type: "update_room" };
-        const responseData = rooms.getRoomsJson();
+      rooms.sendRoomsUpdate(connections);
+    }
 
-        response.data = responseData;
-        connection.send(JSON.stringify(response));
-      });
+    if (parsed.type === "add_user_to_room") {
+      const room = rooms.getRoomFromIndex(parsed.data.indexRoom);
+      const userData = users.getUserByConnetion(socket);
+
+      if (!room || !userData) {
+        return;
+      }
+
+      room.addPlayer(socket, userData);
+      rooms.sendRoomsUpdate(connections);
     }
 
     console.log("socket message", parsed.type);

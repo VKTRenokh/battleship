@@ -1,5 +1,6 @@
 import { ResponseMessage } from "../types/Message";
 import { Room } from "./room/room";
+import { WebSocket } from "ws";
 
 export class Rooms {
   rooms: Room[];
@@ -30,5 +31,19 @@ export class Rooms {
         return room.getJson();
       })
     );
+  }
+
+  getRoomFromIndex(index: number) {
+    return this.rooms.find((room) => room.id === index);
+  }
+
+  sendRoomsUpdate(connections: WebSocket[]) {
+    connections.forEach((connection) => {
+      const response: ResponseMessage = { type: "update_room" };
+      const responseData = this.getRoomsJson();
+
+      response.data = responseData;
+      connection.send(JSON.stringify(response));
+    });
   }
 }
