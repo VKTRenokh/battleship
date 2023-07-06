@@ -1,7 +1,10 @@
+import { WebSocket } from "ws";
+
 export interface User {
   id: number;
   password: string;
   name: string;
+  connection?: WebSocket;
 }
 
 export const isUser = (user: any): user is User => {

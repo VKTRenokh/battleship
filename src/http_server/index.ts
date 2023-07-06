@@ -3,8 +3,9 @@ import * as path from "path";
 import * as http from "http";
 import * as ws from "ws";
 import { Users } from "./users/users";
-import { isMessage } from "./types/Message";
+import { ResponseMessage, isMessage } from "./types/Message";
 import { isUser } from "./types/User";
+import { Rooms } from "./rooms/rooms";
 
 export const httpServer = http.createServer(function (req, res) {
   const __dirname = path.resolve(path.dirname(""));
@@ -27,8 +28,9 @@ const webSocketServer = new ws.WebSocketServer({
   maxPayload: 100000,
 });
 
-const connections: ws.ClientOptions[] = [];
+const connections: ws[] = [];
 const users = new Users();
+const rooms = new Rooms();
 
 webSocketServer.on("connection", (socket, req) => {
   connections.push(socket);
@@ -39,7 +41,7 @@ webSocketServer.on("connection", (socket, req) => {
     }
 
     const parsed = JSON.parse(data.toString());
-    parsed.data = JSON.parse(parsed.data);
+    parsed.data = parsed.data === "" ? {} : JSON.parse(parsed.data);
 
     if (!isMessage(parsed)) {
       return;
@@ -49,7 +51,26 @@ webSocketServer.on("connection", (socket, req) => {
       users.newUser(socket, parsed.data);
     }
 
+    if (parsed.type === "create_room") {
+      const room = rooms.create(crypto.randomUUID());
+      const user = users.getUserByConnetion(socket);
+
+      if (!user) {
+        return;
+      }
+
+      connections.forEach((connection) => {
+        const response: ResponseMessage = { type: "update_room" };
+        const responseData = rooms.getRoomsJson();
+
+        response.data = responseData;
+        connection.send(JSON.stringify(response));
+      });
+    }
+
     console.log("socket message", parsed.type);
+
+    console.log(parsed);
   });
 });
 
