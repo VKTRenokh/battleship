@@ -59,10 +59,20 @@ webSocketServer.on("connection", (socket, req) => {
         return;
       }
 
+      room.addPlayer(socket, user);
+
+      if (!user) {
+        return;
+      }
+
       rooms.sendRoomsUpdate(connections);
     }
 
     if (parsed.type === "add_user_to_room") {
+      if (typeof parsed.data.indexRoom !== "number") {
+        return;
+      }
+
       const room = rooms.getRoomFromIndex(parsed.data.indexRoom);
       const userData = users.getUserByConnetion(socket);
 
@@ -74,9 +84,11 @@ webSocketServer.on("connection", (socket, req) => {
       rooms.sendRoomsUpdate(connections);
     }
 
-    console.log("socket message", parsed.type);
+    if (parsed.type === "add_ships") {
+      console.log(parsed.data);
+    }
 
-    console.log(parsed);
+    console.log("socket message", parsed.type);
   });
 });
 

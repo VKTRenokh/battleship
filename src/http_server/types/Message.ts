@@ -1,8 +1,15 @@
 import { RequestTypes } from "./RequestTypes";
 
+export type Message =
+  | string
+  | number
+  | number[]
+  | string[]
+  | { [key: string]: Message };
+
 export interface IncomingMessage {
   type: RequestTypes;
-  data: Record<string, any>;
+  data: Record<string, Message>;
 }
 
 export interface ResponseMessage {
@@ -11,6 +18,6 @@ export interface ResponseMessage {
   id?: number;
 }
 
-export const isMessage = (message: any): message is IncomingMessage => {
+export const isMessage = (message: object): message is IncomingMessage => {
   return "type" in message && "data" in message;
 };
