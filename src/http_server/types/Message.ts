@@ -9,7 +9,7 @@ export type Message =
 
 export interface IncomingMessage {
   type: RequestTypes;
-  data: Record<string, Message>;
+  data: Record<string, unknown>;
 }
 
 export interface ResponseMessage {

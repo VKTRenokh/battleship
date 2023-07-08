@@ -4,14 +4,17 @@ import { User } from "@/http_server/types/User";
 import { WebSocket } from "ws";
 import { Message } from "@/http_server/types/Message";
 import { Player } from "./player/player";
+import { isShipArray } from "../../types/Ships";
 
 export class Room {
   players: Player[];
   ships: number[][];
+  currentPlayerId: number;
 
   constructor(public id: number, public name: string) {
     this.players = [];
     this.ships = [];
+    this.currentPlayerId = 0;
   }
 
   addPlayer(connection: WebSocket, playerData: User) {
@@ -31,7 +34,7 @@ export class Room {
       };
 
       response.data = JSON.stringify(responseData);
-      player.connection.send(JSON.stringify(response));
+      player.send(response);
     });
   }
 
@@ -47,7 +50,36 @@ export class Room {
     };
   }
 
-  handleShipPlacement(data: Record<string, Message>) {
+  startGame() {
+    this.players.forEach((player) => {
+      const response: ResponseMessage = { type: "start_game" };
+      const responseData: Record<string, unknown> = {};
+
+      responseData.ships = player.ships;
+      responseData.currentPlayerIndex = player.id;
+
+      response.data = JSON.stringify(responseData);
+      player.send(response);
+    });
+
+    this.nextTurn();
+  }
+
+  nextTurn() {
+    const player = this.players[this.currentPlayerId];
+
+    this.currentPlayerId = (this.currentPlayerId + 1) % this.players.length;
+
+    const response: ResponseMessage = { type: "turn" };
+    const responseData: Record<string, unknown> = {
+      currentPlayer: this.currentPlayerId,
+    };
+
+    response.data = JSON.stringify(responseData);
+    player.send(response);
+  }
+
+  handleShipPlacement(data: Record<string, unknown>) {
     if (typeof data.indexPlayer !== "number") {
       return;
     }
@@ -56,8 +88,26 @@ export class Room {
       return;
     }
 
-    console.log(this.players[data.indexPlayer]);
+    if (!isShipArray(data.ships)) {
+      return;
+    }
 
-    console.log(data);
+    this.players[data.indexPlayer].setShips(data.ships);
+
+    this.players[data.indexPlayer].isReady = true;
+
+    if (!this.players.every((player) => player.isReady)) {
+      return;
+    }
+
+    this.startGame();
+  }
+
+  handleAttack(data: Record<string, unknown>) {
+    console.log("attack ", data);
+
+    this.players.forEach((player) => {
+      console.log(player.ships);
+    });
   }
 }

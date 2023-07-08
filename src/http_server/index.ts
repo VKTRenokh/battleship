@@ -3,8 +3,7 @@ import * as path from "path";
 import * as http from "http";
 import * as ws from "ws";
 import { Users } from "./users/users";
-import { ResponseMessage, isMessage } from "./types/Message";
-import { isUser } from "./types/User";
+import { isMessage } from "./types/Message";
 import { Rooms } from "./rooms/rooms";
 
 export const httpServer = http.createServer(function (req, res) {
@@ -32,7 +31,7 @@ const connections: ws.WebSocket[] = [];
 const users = new Users();
 const rooms = new Rooms();
 
-webSocketServer.on("connection", (socket, req) => {
+webSocketServer.on("connection", (socket, _) => {
   connections.push(socket);
 
   socket.on("message", (data, isBinary) => {
@@ -46,6 +45,8 @@ webSocketServer.on("connection", (socket, req) => {
     if (!isMessage(parsed)) {
       return;
     }
+
+    console.log("socket message", parsed.type);
 
     if (parsed.type === "reg") {
       users.newUser(socket, parsed.data);
@@ -85,10 +86,32 @@ webSocketServer.on("connection", (socket, req) => {
     }
 
     if (parsed.type === "add_ships") {
-      console.log(parsed.data);
+      if (typeof parsed.data.gameId !== "number") {
+        return;
+      }
+
+      const room = rooms.getRoomFromIndex(parsed.data.gameId);
+
+      if (!room) {
+        return;
+      }
+
+      room.handleShipPlacement(parsed.data);
     }
 
-    console.log("socket message", parsed.type);
+    if (parsed.type === "attack") {
+      if (typeof parsed.data.gameId !== "number") {
+        return;
+      }
+
+      const room = rooms.getRoomFromIndex(parsed.data.gameId);
+
+      if (!room) {
+        return;
+      }
+
+      room.handleAttack(parsed.data);
+    }
   });
 });
 

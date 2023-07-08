@@ -21,10 +21,6 @@ export class Rooms {
     return room;
   }
 
-  startGame(roomName: string) {
-    throw new Error("not implemented");
-  }
-
   getRoomsJson() {
     return JSON.stringify(
       this.rooms.map((room) => {
