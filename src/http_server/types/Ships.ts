@@ -1,4 +1,4 @@
-interface Position {
+export interface Position {
   x: number;
   y: number;
 }
@@ -8,6 +8,7 @@ export interface Ship {
   direction: boolean;
   length: number;
   type: "small" | "medium" | "large" | "huge";
+  hittedPositions?: number[];
 }
 
 export const isShip = (ship: unknown): ship is Ship => {

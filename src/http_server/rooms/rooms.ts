@@ -6,8 +6,7 @@ export class Rooms {
   rooms: Room[];
 
   constructor() {
-    this.rooms = [];
-  }
+    this.rooms = []; }
 
   exists(roomName: string) {
     return !!this.rooms.find((room) => room.name === roomName);

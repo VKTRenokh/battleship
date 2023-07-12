@@ -1,5 +1,4 @@
 import { ResponseMessage } from "@/http_server/types/Message";
-// import { Player } from "@/http_server/types/Player";
 import { User } from "@/http_server/types/User";
 import { WebSocket } from "ws";
 import { Message } from "@/http_server/types/Message";
@@ -11,7 +10,10 @@ export class Room {
   ships: number[][];
   currentPlayerId: number;
 
-  constructor(public id: number, public name: string) {
+  constructor(
+    public id: number,
+    public name: string,
+  ) {
     this.players = [];
     this.ships = [];
     this.currentPlayerId = 0;
@@ -104,10 +106,44 @@ export class Room {
   }
 
   handleAttack(data: Record<string, unknown>) {
-    console.log("attack ", data);
+    console.log("handle Attack Call");
+    console.log(data.indexPlayer);
 
-    this.players.forEach((player) => {
-      console.log(player.ships);
+    if (
+      typeof data.indexPlayer !== "number" ||
+      typeof data.x !== "number" ||
+      typeof data.y !== "number"
+    ) {
+      return;
+    }
+
+    const player = this.players[data.indexPlayer ? 1 : 0];
+
+    if (!player) {
+      return;
+    }
+
+    const response: ResponseMessage = {
+      type: "attack",
+    };
+
+    const responseData: Record<string, unknown> = {
+      position: {
+        x: data.x,
+        y: data.y,
+      },
+      status: player.attack(data.x, data.y),
+    };
+
+    this.players.forEach((player, index) => {
+      if (typeof data.x !== "number" || typeof data.y !== "number") {
+        return;
+      }
+
+      responseData.currentPlayer = index;
+
+      response.data = JSON.stringify(responseData);
+      player.send(response);
     });
   }
 }
