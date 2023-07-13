@@ -106,18 +106,16 @@ export class Room {
   }
 
   handleAttack(data: Record<string, unknown>) {
-    console.log("handle Attack Call");
-    console.log(data.indexPlayer);
-
     if (
       typeof data.indexPlayer !== "number" ||
       typeof data.x !== "number" ||
-      typeof data.y !== "number"
+      typeof data.y !== "number" ||
+      data.indexPlayer !== this.currentPlayerId
     ) {
       return;
     }
 
-    const player = this.players[data.indexPlayer ? 1 : 0];
+    const player = this.players[data.indexPlayer ? 0 : 1];
 
     if (!player) {
       return;
@@ -127,12 +125,14 @@ export class Room {
       type: "attack",
     };
 
+    const status = player.attack(data.x, data.y);
+
     const responseData: Record<string, unknown> = {
       position: {
         x: data.x,
         y: data.y,
       },
-      status: player.attack(data.x, data.y),
+      status: status,
     };
 
     this.players.forEach((player, index) => {
@@ -141,9 +141,16 @@ export class Room {
       }
 
       responseData.currentPlayer = index;
+      console.log(responseData.currentPlayer);
 
       response.data = JSON.stringify(responseData);
       player.send(response);
     });
+
+    if (status === "hit" || status === "killed") {
+      return;
+    }
+
+    this.nextTurn();
   }
 }

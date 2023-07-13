@@ -17,7 +17,6 @@ export class Player {
   }
 
   setShips(ships: Ship[]) {
-    console.log(ships);
     this.ships = ships;
   }
 
@@ -26,16 +25,10 @@ export class Player {
   }
 
   getHittedPositon(x: number, y: number): undefined | Ship {
-    const ship = this.ships.find((ship, index) => {
+    return this.ships.find((ship) => {
       const range =
         (ship.direction ? ship.position.y : ship.position.x) +
         (ship.length - 1);
-
-      console.log(
-        `range ${range}, x ${x} y ${y} direction ${
-          ship.direction ? "vertical" : "horizontal"
-        } length ${this.ships.length} current ${index}`,
-      );
 
       if (ship.direction) {
         return y >= ship.position.y && y <= range && x === ship.position.x;
@@ -43,8 +36,6 @@ export class Player {
 
       return x >= ship.position.x && x <= range && y === ship.position.y;
     });
-
-    return ship;
   }
 
   getStatus(x: number, y: number) {
@@ -59,7 +50,7 @@ export class Player {
     hittedShip.length--;
 
     if (!hittedShip.length) {
-      return "kill";
+      return "killed";
     }
 
     return "hit";
