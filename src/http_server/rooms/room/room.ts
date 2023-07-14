@@ -64,21 +64,27 @@ export class Room {
       player.send(response);
     });
 
-    this.nextTurn();
+    this.sendTurn();
   }
 
-  nextTurn() {
-    const player = this.players[this.currentPlayerId];
-
-    this.currentPlayerId = (this.currentPlayerId + 1) % this.players.length;
-
+  sendTurn() {
     const response: ResponseMessage = { type: "turn" };
+
     const responseData: Record<string, unknown> = {
       currentPlayer: this.currentPlayerId,
     };
 
     response.data = JSON.stringify(responseData);
-    player.send(response);
+
+    this.players.forEach((player) => {
+      player.send(response);
+    });
+  }
+
+  nextTurn() {
+    this.currentPlayerId = (this.currentPlayerId + 1) % this.players.length;
+
+    this.sendTurn();
   }
 
   handleShipPlacement(data: Record<string, unknown>) {
@@ -148,6 +154,7 @@ export class Room {
     });
 
     if (status === "hit" || status === "killed") {
+      this.sendTurn();
       return;
     }
 
