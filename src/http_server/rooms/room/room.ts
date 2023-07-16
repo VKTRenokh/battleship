@@ -3,7 +3,7 @@ import { User } from "@/http_server/types/User";
 import { WebSocket } from "ws";
 import { Message } from "@/http_server/types/Message";
 import { Player } from "./player/player";
-import { isShipArray } from "../../types/Ships";
+import { Ship, isShipArray } from "../../types/Ships";
 
 export class Room {
   players: Player[];
@@ -111,6 +111,27 @@ export class Room {
     this.startGame();
   }
 
+  sendKilled(attackingPlayerId: number, player: Player, ship: Ship) {
+    if (!ship.hittedPositions) {
+      return;
+    }
+
+    const response: ResponseMessage = { type: "attack" };
+
+    const responseData: Record<string, unknown> = {
+      currentPlayer: attackingPlayerId,
+      status: "killed",
+    };
+
+    ship.hittedPositions.forEach((position) => {
+      responseData.position = position;
+
+      response.data = JSON.stringify(responseData);
+
+      player.send(response);
+    });
+  }
+
   handleAttack(data: Record<string, unknown>) {
     if (
       typeof data.indexPlayer !== "number" ||
@@ -138,22 +159,30 @@ export class Room {
         x: data.x,
         y: data.y,
       },
-      status: status,
+      currentPlayer: data.indexPlayer,
+      status: status.status,
     };
 
-    this.players.forEach((player, index) => {
+    this.players.forEach((player) => {
       if (typeof data.x !== "number" || typeof data.y !== "number") {
         return;
       }
 
-      responseData.currentPlayer = index;
-      console.log(responseData.currentPlayer);
+      if (
+        status.status === "killed" &&
+        status.ship &&
+        typeof data.indexPlayer === "number"
+      ) {
+        this.sendKilled(data.indexPlayer, player, status.ship);
+        return;
+      }
 
       response.data = JSON.stringify(responseData);
+
       player.send(response);
     });
 
-    if (status === "hit" || status === "killed") {
+    if (status.status === "hit" || status.status === "killed") {
       this.sendTurn();
       return;
     }

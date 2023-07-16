@@ -1,5 +1,5 @@
 import { HitStatus } from "@/http_server/types/HitStatus";
-import { Message, ResponseMessage } from "@/http_server/types/Message";
+import { ResponseMessage } from "@/http_server/types/Message";
 import { Ship } from "@/http_server/types/Ships";
 import { WebSocket } from "ws";
 
@@ -17,18 +17,20 @@ export class Player {
   }
 
   setShips(ships: Ship[]) {
-    this.ships = ships;
+    this.ships = ships.map((ship) => {
+      ship.hittedPositions = [];
+      return ship;
+    });
   }
 
   send(data: ResponseMessage) {
     this.connection.send(JSON.stringify(data));
   }
 
-  getHittedPositon(x: number, y: number): undefined | Ship {
+  getHittedShip(x: number, y: number): undefined | Ship {
     return this.ships.find((ship) => {
       const range =
-        (ship.direction ? ship.position.y : ship.position.x) +
-        (ship.length - 1);
+        (ship.direction ? ship.position.y : ship.position.x) + ship.length;
 
       if (ship.direction) {
         return y >= ship.position.y && y <= range && x === ship.position.x;
@@ -38,22 +40,27 @@ export class Player {
     });
   }
 
-  getStatus(x: number, y: number) {
-    const hittedShip = this.getHittedPositon(x, y);
-
-    console.log(hittedShip);
+  getStatus(x: number, y: number): HitStatus {
+    const hittedShip = this.getHittedShip(x, y);
 
     if (!hittedShip) {
-      return "miss";
+      return {
+        status: "miss",
+      };
     }
 
-    hittedShip.length--;
+    hittedShip.hittedPositions?.push({ x, y });
 
-    if (!hittedShip.length) {
-      return "killed";
+    if (hittedShip.hittedPositions?.length === hittedShip.length) {
+      return {
+        status: "killed",
+        ship: hittedShip,
+      };
     }
 
-    return "hit";
+    return {
+      status: "hit",
+    };
   }
 
   attack(x: number, y: number) {
