@@ -112,6 +112,24 @@ webSocketServer.on("connection", (socket, _) => {
 
       room.handleAttack(parsed.data);
     }
+
+    if (parsed.type === "randomAttack") {
+      if (typeof parsed.data.gameId !== "number") {
+        return;
+      }
+
+      const room = rooms.getRoomFromIndex(parsed.data.gameId);
+
+      if (!room) {
+        return;
+      }
+
+      room.handleAttack({
+        x: (Math.random() * 100) | 0,
+        y: (Math.random() * 100) | 0,
+        indexPlayer: parsed.data.indexPlayer,
+      });
+    }
   });
 });
 
