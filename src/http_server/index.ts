@@ -3,8 +3,9 @@ import * as path from "path";
 import * as http from "http";
 import * as ws from "ws";
 import { Users } from "./users/users";
-import { isMessage } from "./types/Message";
+import { ResponseMessage, isMessage } from "./types/Message";
 import { Rooms } from "./rooms/rooms";
+import { Winners } from "./winners/winners";
 
 export const httpServer = http.createServer(function (req, res) {
   const __dirname = path.resolve(path.dirname(""));
@@ -30,6 +31,23 @@ const webSocketServer = new ws.WebSocketServer({
 const connections: ws.WebSocket[] = [];
 const users = new Users();
 const rooms = new Rooms();
+const winners = new Winners();
+
+rooms.onRoomFinish = (roomId, winner) => {
+  const index = winners.getIndexByName(winner.username);
+
+  rooms.sendRoomsUpdate(connections);
+
+  if (index === -1) {
+    winners.addWinner(winner.username);
+    winners.sendUpdateWinners(connections);
+    return;
+  }
+
+  winners.increaseWins(index);
+
+  winners.sendUpdateWinners(connections);
+};
 
 webSocketServer.on("connection", (socket, _) => {
   connections.push(socket);
@@ -50,6 +68,12 @@ webSocketServer.on("connection", (socket, _) => {
 
     if (parsed.type === "reg") {
       users.newUser(socket, parsed.data);
+
+      const response: ResponseMessage = { type: "update_winners" };
+
+      response.data = JSON.stringify(winners.winners);
+
+      socket.send(JSON.stringify(response));
     }
 
     if (parsed.type === "create_room") {
@@ -61,10 +85,6 @@ webSocketServer.on("connection", (socket, _) => {
       }
 
       room.addPlayer(socket, user);
-
-      if (!user) {
-        return;
-      }
 
       rooms.sendRoomsUpdate(connections);
     }

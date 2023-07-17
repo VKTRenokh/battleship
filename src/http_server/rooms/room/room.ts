@@ -9,7 +9,7 @@ export class Room {
   players: Player[];
   ships: number[][];
   currentPlayerId: number;
-  onFinish: (() => void) | null = null;
+  onFinish: ((winner: Player) => void) | null = null;
 
   constructor(
     public id: number,
@@ -185,7 +185,7 @@ export class Room {
 
     if (status.status === "hit" || status.status === "killed") {
       if (player.isAllShipsKilled()) {
-        this.finish(data.indexPlayer);
+        this.finish(this.players[data.indexPlayer]);
       }
 
       this.sendTurn();
@@ -195,13 +195,13 @@ export class Room {
     this.nextTurn();
   }
 
-  finish(winnerId: number) {
+  finish(player: Player) {
     const response: ResponseMessage = {
       type: "finish",
     };
 
     const responseData: Record<string, unknown> = {
-      winPlayer: winnerId,
+      winPlayer: player.id,
     };
 
     response.data = JSON.stringify(responseData);
@@ -214,6 +214,6 @@ export class Room {
       return;
     }
 
-    this.onFinish();
+    this.onFinish(player);
   }
 }

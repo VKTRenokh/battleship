@@ -1,9 +1,11 @@
 import { ResponseMessage } from "../types/Message";
+import { Player } from "./room/player/player";
 import { Room } from "./room/room";
 import { WebSocket } from "ws";
 
 export class Rooms {
   rooms: Room[];
+  onRoomFinish: ((roomId: number, winner: Player) => void) | null = null;
 
   constructor() {
     this.rooms = [];
@@ -16,8 +18,10 @@ export class Rooms {
   create(roomName: string) {
     const room = new Room(this.rooms.length, roomName);
 
-    room.onFinish = () => {
+    room.onFinish = (player) => {
       this.rooms.splice(room.id);
+
+      this.onRoomFinish?.(room.id, player);
     };
 
     this.rooms.push(room);
