@@ -66,4 +66,14 @@ export class Player {
   attack(x: number, y: number) {
     return this.getStatus(x, y);
   }
+
+  isAllShipsKilled() {
+    return this.ships.every((ship) => {
+      if (!ship.hittedPositions) {
+        return;
+      }
+
+      return ship.hittedPositions.length === ship.length;
+    });
+  }
 }

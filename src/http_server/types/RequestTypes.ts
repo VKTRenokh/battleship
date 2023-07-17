@@ -10,4 +10,5 @@ export type RequestTypes =
   | "add_ships"
   | "attack"
   | "randomAttack"
+  | "finish"
   | "turn";

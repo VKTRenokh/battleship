@@ -6,7 +6,8 @@ export class Rooms {
   rooms: Room[];
 
   constructor() {
-    this.rooms = []; }
+    this.rooms = [];
+  }
 
   exists(roomName: string) {
     return !!this.rooms.find((room) => room.name === roomName);
@@ -14,6 +15,10 @@ export class Rooms {
 
   create(roomName: string) {
     const room = new Room(this.rooms.length, roomName);
+
+    room.onFinish = () => {
+      this.rooms.splice(room.id);
+    };
 
     this.rooms.push(room);
 
@@ -24,7 +29,7 @@ export class Rooms {
     return JSON.stringify(
       this.rooms.map((room) => {
         return room.getJson();
-      })
+      }),
     );
   }
 
