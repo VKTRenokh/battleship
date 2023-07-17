@@ -10,8 +10,8 @@ export class Users {
     this.users = [];
   }
 
-  exists(name: string) {
-    return !!this.users.find((user) => user.name === name);
+  getUserByName(name: string) {
+    return this.users.find((user) => user.name === name);
   }
 
   newUser(connection: ws.WebSocket, userData: Record<string, any>) {
@@ -29,10 +29,6 @@ export class Users {
       return;
     }
 
-    if (this.exists(userData.name)) {
-      this.login(connection, userData);
-    }
-
     responseData.name = userData.name;
     responseData.password = userData.password;
     responseData.index = crypto.randomUUID();
@@ -48,6 +44,20 @@ export class Users {
     const response: ResponseMessage = { type: "reg" };
     const responseData: Record<string, any> = {};
 
+    const user = this.getUserByName(userData.name);
+
+    if (!user) {
+      return;
+    }
+
+    if (user.password !== userData.password) {
+      responseData.error = true;
+      responseData.errorMessage = "password doesn't match";
+      response.data = JSON.stringify(responseData);
+      connection.send(JSON.stringify(response));
+      return;
+    }
+
     responseData.name = userData.name;
     responseData.password = userData.password;
 
@@ -58,5 +68,15 @@ export class Users {
 
   getUserByConnetion(connection: ws.WebSocket) {
     return this.users.find((user) => user.connection === connection);
+  }
+
+  handleDisconnect(connection: ws.WebSocket) {
+    const user = this.getUserByConnetion(connection);
+
+    if (!user) {
+      return;
+    }
+
+    user.connection = undefined;
   }
 }

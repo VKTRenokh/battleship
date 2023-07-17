@@ -6,6 +6,7 @@ import { Users } from "./users/users";
 import { ResponseMessage, isMessage } from "./types/Message";
 import { Rooms } from "./rooms/rooms";
 import { Winners } from "./winners/winners";
+import { isUser } from "./types/User";
 
 export const httpServer = http.createServer(function (req, res) {
   const __dirname = path.resolve(path.dirname(""));
@@ -66,8 +67,12 @@ webSocketServer.on("connection", (socket, _) => {
 
     console.log("socket message", parsed.type);
 
-    if (parsed.type === "reg") {
-      users.newUser(socket, parsed.data);
+    if (parsed.type === "reg" && isUser(parsed.data)) {
+      if (users.getUserByName(parsed.data.name)) {
+        users.login(socket, parsed.data);
+      } else {
+        users.newUser(socket, parsed.data);
+      }
 
       const response: ResponseMessage = { type: "update_winners" };
 
@@ -150,6 +155,10 @@ webSocketServer.on("connection", (socket, _) => {
         indexPlayer: parsed.data.indexPlayer,
       });
     }
+  });
+
+  socket.on("close", () => {
+    users.handleDisconnect(socket);
   });
 });
 
